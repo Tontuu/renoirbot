@@ -4,7 +4,9 @@ const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
 
 // Setup dotenv and get bot token
 require("dotenv").config();
-const token = process.env.DISCORD_TOKEN;
+const discordToken = process.env.DISCORDTOKEN;
+const twitchClientID = process.env.TWITCH_CLIENT_ID;
+const igdbToken = process.env.IGDB_POST_TOKEN;
 
 // Setup main client
 const client = new Client({intents:[GatewayIntentBits.Guilds]});
@@ -40,9 +42,9 @@ client.on(Events.InteractionCreate, async interaction => {
     } catch (e) {
         console.error(e);
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: "Meow Meow, either i didn't work as expected or you missed a command º-º", ephemeral: true });
+            await interaction.followUp({ content: "Meow Meow, either i didn't find the game that you want or you missed a command!!! o_O", ephemeral: true });
         } else {
-            await interaction.reply({ content: "Meow Meow, either i didn't work as expected or you missed a command º-º", ephemeral: true });
+            await interaction.reply({ content: "Meow Meow, either i didn't find the game that you want or you missed a command!!! o_O", ephemeral: true });
 		}
     }
 })
@@ -53,6 +55,6 @@ client.once(Events.ClientReady, c => {
     console.log(`${c.user.tag} is UP!`);
 })
 
-client.login(token);
+client.login(discordToken);
 
 
