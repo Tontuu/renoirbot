@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder, inlineCode, bold } = require("discord.js");
+const { SlashCommandBuilder, inlineCode,} = require("discord.js");
+const utils = require("../utils");
 
 // Command constants
 const AUTHOR = "Ton";
@@ -9,32 +10,12 @@ const COMMANDS_MSG = `
 ${inlineCode("/help")}
 ${inlineCode("/search <game>")}
 `;
-const FOOTER_TEXT = "Requested by: ";
 const DOC_LINK = "https://renoir.com/docs\n";
 
 // Construct Embed message
 function replyHelp(interaction) {
     const user = interaction.user;
-    const helpEmbed = new EmbedBuilder()
-          .setColor(0x0099FF)
-          .setTitle(TITLE)
-          .setAuthor({ name: AUTHOR, iconURL: ICON_URL})
-          .setDescription(DESCRIPTION)
-          .addFields(
-              {name: "\u200B", value: " " },
-              {name: "Basic commands", value: COMMANDS_MSG},
-              {name: "\u200B", value: " " },
-              {name: "Documentation", value: DOC_LINK},
-              {name: "\u200B", value: " " },
-          )
-          .setTimestamp()
-          .setFooter(
-              {
-                  text: FOOTER_TEXT + user.username,
-                  iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-              });
-
-
+    const helpEmbed = utils.buildHelpEmbed(0xFF0055, TITLE, AUTHOR, ICON_URL, DESCRIPTION, COMMANDS_MSG, DOC_LINK, user.username);
     interaction.reply({embeds: [helpEmbed]});
 }
 
@@ -43,7 +24,7 @@ module.exports = {
         .setName('help')
         .setDescription('Help command!'),
 
-    async execute(interaction) {
-        await replyHelp(interaction);
+    execute(interaction) {
+        replyHelp(interaction);
     },
 };

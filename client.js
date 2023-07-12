@@ -2,11 +2,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
 
+
+// Setup constants
+const ERROR_MSG = "Meow, i think you missed how to use the command properly!!! o_O";
+
 // Setup dotenv and get bot token
 require("dotenv").config();
 const discordToken = process.env.DISCORDTOKEN;
-const twitchClientID = process.env.TWITCH_CLIENT_ID;
-const igdbToken = process.env.IGDB_POST_TOKEN;
 
 // Setup main client
 const client = new Client({intents:[GatewayIntentBits.Guilds]});
@@ -33,7 +35,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
-        console.error(`No idea of this command: ${interaction.commandName}`)
+        console.error(`[ERROR]: Unknown command: ${interaction.commandName}`)
         return;
     }
 
@@ -42,17 +44,16 @@ client.on(Events.InteractionCreate, async interaction => {
     } catch (e) {
         console.error(e);
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: "Meow Meow, either i didn't find the game that you want or you missed a command!!! o_O", ephemeral: true });
+            await interaction.followUp({ content: ERROR_MSG, ephemeral: true });
         } else {
-            await interaction.reply({ content: "Meow Meow, either i didn't find the game that you want or you missed a command!!! o_O", ephemeral: true });
+            await interaction.reply({ content: ERROR_MSG, ephemeral: true });
 		}
     }
 })
 
-
 // Client only run once;
 client.once(Events.ClientReady, c => {
-    console.log(`${c.user.tag} is UP!`);
+    console.log(`[INFO]: ${c.user.tag} is UP!`);
 })
 
 client.login(discordToken);

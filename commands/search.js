@@ -1,45 +1,39 @@
-const { SlashCommandBuilder, SlashCommandStringOption, EmbedBuilder, inlineCode, bold } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
+const utils = require("../utils");
 
 require("dotenv").config();
 
 // Command constants
+const MISSING_DATA_MSG = "Meow Meow, Well... I couldn't find any data for this game >.<";
 const twitchClientID = process.env.TWITCH_CLIENT_ID;
 const igdbToken = process.env.IGDB_POST_TOKEN;
 const game = require("../query");
 
-async function getGameData(queryUserInput) {
-    const data = await game.query(queryUserInput, twitchClientID, igdbToken);
-    return await data;
-}
-
-// Construct Embed message
 async function replyGame(interaction) {
     const user = interaction.user;
     const queryUserInput = interaction.options.getString("game");
+
+    console.log(`[INFO]: ${user.username} requested '${queryUserInput}'!`)
+
     const gameData = await game.query(queryUserInput, twitchClientID, igdbToken);
 
-    const helpEmbed = new EmbedBuilder()
-          .setColor(0x0099FF)
-          .setAuthor({ name: gameData.name, iconURL: "https://cdn.discordapp.com/avatars/1126190008492109864/9cc14e6f7432306ba2195a9c2fef4614.png"})
-          .setDescription(gameData.description)
-          .addFields(
-              {name: "\u200B", value: " " },
-              {name: "Rating", value: gameData.rating, inline:true},
-              {name: "Release Date", value: gameData.release_date, inline:true},
-              {name: "Developers", value: gameData.developers.join(", "), inline:true},
-              {name: "\u200B", value:  bold("Platforms: ") + gameData.platforms.join(", ") },
-              {name: "\u200B", value: bold("Genres: ") + gameData.genres.join(", ") },
-              {name: "\u200B", value:  bold("IGDB Site: ") + gameData.url },
-          )
-          .setImage("https://images.igdb.com/igdb/image/upload/t_cover_big/" + gameData.picture_id + ".png")
-          .setTimestamp()
-          .setFooter(
-              {
-                  text: "Requested by: " + user.username,
-                  iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
-              });
+    if (gameData === undefined) {
+        console.log(`[ERROR]: Missing data for '${queryUserInput}' game requested by '${user.username}'!`);
+        interaction.reply(MISSING_DATA_MSG);
+        return;
+    }
 
-    interaction.reply({embeds: [helpEmbed]});
+    const searchEmbed = utils.buildGameEmbed(gameData, 0x0099FF, setTimestamp = true);
+
+    searchEmbed.setFooter(
+        {
+            text: "Requested by: " + user.username,
+            iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+        });
+
+    interaction.reply({embeds: [searchEmbed]})
+        .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${queryUserInput}' request!`))
+        .catch((e) => {console.error("[ERROR]: ", e);});
 }
 
 module.exports = {
