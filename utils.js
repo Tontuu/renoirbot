@@ -59,7 +59,7 @@ function assignToMissingResults(gameData) {
     return gameData;
 }
 
-function buildHelpEmbed(color, title, author, iconURL, description, commandField, documentation, username) {
+function buildHelpEmbed(color, title, author, iconURL, description, commandField, documentation, user) {
     const helpEmbed = new EmbedBuilder()
           .setColor(color)
           .setTitle(title)
@@ -75,7 +75,7 @@ function buildHelpEmbed(color, title, author, iconURL, description, commandField
           .setTimestamp()
           .setFooter(
               {
-                  text: "Requested by: " + username,
+                  text: "Requested by: " + user,
                   iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
               });
 
@@ -88,10 +88,7 @@ function buildGameEmbed(gameData, color, setTimestamp = false) {
 
     embedCtx.setAuthor({ name: gameData.name, iconURL: "https://cdn.discordapp.com/avatars/1126190008492109864/9cc14e6f7432306ba2195a9c2fef4614.png"})
 
-    if (color) {
-        const hexColorReg = /^#[0-9A-F]{6}$/i;
-        hexColorReg.test(color.toString());
-    }
+    embedCtx.setColor(color);
 
     if (gameData.description) {
         embedCtx.setDescription(gameData.description)

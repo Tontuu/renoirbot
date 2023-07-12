@@ -27,14 +27,16 @@ async function getGamePlaytime(gameName) {
     let hltb = require("howlongtobeat");
     let hltbService = new hltb.HowLongToBeatService();
 
-    let gamePlaytimes = "None";
+    let gamePlaytimes = undefined;
 
     await hltbService.search(gameName).then((result) => {
-        gamePlaytimes = {
-            gameplayMain: result[0].gameplayMain,
-            gameplayExtra: result[0].gameplayMainExtra,
-            gameplayCompletionist: result[0].gameplayCompletionist,
-        };
+        if (result !== undefined && result.length > 0) {
+            gamePlaytimes = {
+                gameplayMain: result[0].gameplayMain,
+                gameplayExtra: result[0].gameplayMainExtra,
+                gameplayCompletionist: result[0].gameplayCompletionist,
+            };
+        }
     });
 
     return gamePlaytimes;

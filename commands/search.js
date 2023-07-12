@@ -5,6 +5,8 @@ require("dotenv").config();
 
 // Command constants
 const MISSING_DATA_MSG = "Meow Meow, Well... I couldn't find any data for this game >.<";
+const RANDOM_COLORS = [0xBB1155, 0xBB5511, 0x1155BB, 0x11BB55, 0x55BB11, 0x5511BB,
+                       0x44AA00, 0x4400AA, 0xAA0044, 0xAA4400, 0x0044AA, 0x00AA44];
 const twitchClientID = process.env.TWITCH_CLIENT_ID;
 const igdbToken = process.env.IGDB_POST_TOKEN;
 const game = require("../query");
@@ -23,7 +25,9 @@ async function replyGame(interaction) {
         return;
     }
 
-    const searchEmbed = utils.buildGameEmbed(gameData, 0x0099FF, setTimestamp = true);
+    const randomColor = RANDOM_COLORS[(Math.floor(Math.random() * RANDOM_COLORS.length))];
+
+    const searchEmbed = utils.buildGameEmbed(gameData, randomColor, setTimestamp = true);
 
     searchEmbed.setFooter(
         {

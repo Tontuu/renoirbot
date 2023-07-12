@@ -15,7 +15,7 @@ const DOC_LINK = "https://renoir.com/docs\n";
 // Construct Embed message
 function replyHelp(interaction) {
     const user = interaction.user;
-    const helpEmbed = utils.buildHelpEmbed(0xFF0055, TITLE, AUTHOR, ICON_URL, DESCRIPTION, COMMANDS_MSG, DOC_LINK, user.username);
+    const helpEmbed = utils.buildHelpEmbed(0xDD1155, TITLE, AUTHOR, ICON_URL, DESCRIPTION, COMMANDS_MSG, DOC_LINK, user);
     interaction.reply({embeds: [helpEmbed]});
 }
 
