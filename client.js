@@ -1,8 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { Client, Events, GatewayIntentBits, Collection } = require("discord.js");
-
-
+const express = require("express");
+const { Client, Events, GatewayIntentBits, Collection, ActivityType } = require("discord.js");
 // Setup constants
 const ERROR_MSG = "Meow, i think you missed how to use the command properly!!! o_O";
 
@@ -38,9 +37,8 @@ client.on(Events.InteractionCreate, async interaction => {
         console.error(`[ERROR]: Unknown command: ${interaction.commandName}`)
         return;
     }
-
     try {
-        await command.execute(interaction);
+        await command.execute(interaction, client);
     } catch (e) {
         console.error(e);
         if (interaction.replied || interaction.deferred) {
@@ -54,8 +52,32 @@ client.on(Events.InteractionCreate, async interaction => {
 // Client only run once;
 client.once(Events.ClientReady, c => {
     console.log(`[INFO]: ${c.user.tag} is UP!`);
+    client.user.setActivity('Pantheon', { type: ActivityType.Competing });
 })
 
 client.login(discordToken);
 
 
+
+// Server
+const app = express();
+const port = 2000;
+
+app.get("/stats", (req, res) => {
+    const stats = {
+        uptime: process.uptime().toFixed(2) + "s",
+        status: "RUNNING",
+        timestamp: Date.now()
+    };
+
+    try {
+        res.send(stats);
+    } catch (e) {
+        stats.status = e;
+        res.status(503).send();
+    }
+})
+
+app.listen(port, () => {
+    console.log(`[INFO]: Running server on 'http://localhost:${port}'`);
+})

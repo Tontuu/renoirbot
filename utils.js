@@ -1,4 +1,6 @@
-const {EmbedBuilder, bold, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, StringSelectMenuComponent} = require("discord.js");
+const {EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, inlineCode, bold} = require("discord.js");
+
+const ICON_URL = "https://cdn.discordapp.com/avatars/1126190008492109864/9cc14e6f7432306ba2195a9c2fef4614.png";
 
 function assignToMissingResults(gameData) {
     if (typeof gameData.url === "undefined") {
@@ -59,7 +61,7 @@ function assignToMissingResults(gameData) {
     return gameData;
 }
 
-function buildHelpEmbed(color, title, author, iconURL, description, commandField, documentation, user) {
+function buildHelpEmbed(color, title, author, iconURL, description, commandField, source, user) {
     const helpEmbed = new EmbedBuilder()
           .setColor(color)
           .setTitle(title)
@@ -69,13 +71,13 @@ function buildHelpEmbed(color, title, author, iconURL, description, commandField
               {name: "\u200B", value: " " },
               {name: "Basic commands", value: commandField},
               {name: "\u200B", value: " " },
-              {name: "Documentation", value: documentation},
+              {name: "Source", value: source},
               {name: "\u200B", value: " " },
           )
           .setTimestamp()
           .setFooter(
               {
-                  text: "Requested by: " + user,
+                  text: "Requested by: " + user.username,
                   iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
               });
 
@@ -86,7 +88,7 @@ function buildHelpEmbed(color, title, author, iconURL, description, commandField
 function buildGameEmbed(gameData, color, setTimestamp = false) {
     embedCtx = new EmbedBuilder();
 
-    embedCtx.setAuthor({ name: gameData.name, iconURL: "https://cdn.discordapp.com/avatars/1126190008492109864/9cc14e6f7432306ba2195a9c2fef4614.png"})
+    embedCtx.setAuthor({ name: gameData.name, iconURL: ICON_URL})
 
     embedCtx.setColor(color);
 
@@ -156,7 +158,7 @@ function buildGameEmbed(gameData, color, setTimestamp = false) {
 function buildListEmbed(gameList, input, color, setTimestamp = true) {
     embedCtx = new EmbedBuilder();
 
-    embedCtx.setAuthor({ name: `Matches for ${input}`, iconURL: "https://cdn.discordapp.com/avatars/1126190008492109864/9cc14e6f7432306ba2195a9c2fef4614.png"})
+    embedCtx.setAuthor({ name: `Matches for ${input}`, iconURL: ICON_URL})
 
     embedCtx.setColor(color);
 
@@ -176,6 +178,67 @@ function buildListEmbed(gameList, input, color, setTimestamp = true) {
         }
     }
     console.log("[SUCCESS]: Embed sucessfully created!");
+    return embedCtx;
+}
+
+function buildStatsEmbed(stats, hardware, interaction, client) {
+    const user = interaction.user;
+    embedCtx = new EmbedBuilder();
+
+    embedCtx.setAuthor({name: "The best bot around here!"});
+    embedCtx.setColor(0x0000FF);
+    embedCtx.setTimestamp()
+    embedCtx.setThumbnail(ICON_URL);
+
+
+    let serverCount = client.guilds.cache.size;
+    const statsUptime = "- Uptime: " + inlineCode(stats.uptime);
+    const statsStatus = "- Status: " + inlineCode(stats.status);
+    const statsTimestamp = "- Timestamp: " + inlineCode(stats.timestamp);
+    const statsLatency = "- Latency: " + inlineCode(stats.latency);
+    statsMsg = `${statsUptime}\n${statsStatus}\n${statsTimestamp}\n${statsLatency}`;
+
+    const hwCpu = "- CPU: " + inlineCode(hardware.cpu);
+    const hwOs = "- OS: " + inlineCode(hardware.os);
+    const hwHost = "- Host: " + inlineCode(hardware.host);
+    const hwMem = "- Memory: " + inlineCode(hardware.mem);
+    const hwUptime = "- Uptime: " + inlineCode(hardware.uptime);
+    hardwareMsg = `${hwOs}\n${hwCpu}\n${hwMem}\n${hwHost}\n${hwUptime}`;
+
+    embedCtx.addFields(
+    {
+        name: "📅  Birthday",
+        value: "14/07/2023",
+        inline: true,
+    },
+    {
+        name: "🏰  Serving",
+        value: (serverCount > 1) ? serverCount + " servers" : serverCount + " server",
+        inline: true,
+    },
+    {
+        name: "⌨️   Github",
+        value: "[RenoirBot](https://github.com/Tontuu/renoirbot)",
+        inline: true,
+    },
+    {
+        name: " ",
+        value: "\u200B",
+    },
+    {
+        name: "Bot Stats",
+        value: statsMsg
+    },
+    {
+        name: "Server Specs",
+        value: hardwareMsg
+    });
+
+    embedCtx.setFooter({
+        text: "Requested by: " + user.username,
+        iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+    });
+
     return embedCtx;
 }
 
@@ -229,14 +292,17 @@ function buildComponent(gameList) {
 }
 
 module.exports = {
-    buildHelpEmbed(color, title, author, iconURL, description, commandField, documentation, username) {
-        return buildHelpEmbed(color, title, author, iconURL, description, commandField, documentation, username);
+    buildHelpEmbed(color, title, author, iconURL, description, commandField, source, username) {
+        return buildHelpEmbed(color, title, author, iconURL, description, commandField, source, username);
     },
     buildGameEmbed(gameData, color, setTimestamp) {
         return buildGameEmbed(gameData, color, setTimestamp);
     },
     buildListEmbed(gameList, input, color, setTimestamp) {
         return buildListEmbed(gameList, input, color, setTimestamp);
+    },
+    buildStatsEmbed(stats, hardware, interaction, client) {
+        return buildStatsEmbed(stats, hardware, interaction, client);
     },
     buildMenuOptions(placeholder, gameList) {
         return buildMenuOptions(placeholder, gameList);
