@@ -146,8 +146,8 @@ async function getList(interaction) {
             seeking = false;
         }
 
-        return [userResponse, {embeds: [listEmbed], components:[], ephemeral: false}, null ?? gameData]
     }
+    return [userResponse, {embeds: [listEmbed], components:[], ephemeral: false}, null ?? gameData]
 }
 
 async function replyList(interaction) {
