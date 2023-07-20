@@ -22,6 +22,7 @@ async function replyProfile(interaction) {
             components: []
         });
     }).catch(async (e) => {
+        utils.log(e, utils.logLevels.error);
         await interaction.reply({
             content: `Oops... ${e.message}`, 
             embeds: [],

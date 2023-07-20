@@ -1,4 +1,6 @@
-const { assignToMissingResults } = require("./utils");
+const { error } = require("winston");
+const utils = require("./utils");
+const { NotFoundError } = require("./errors");
 
 const URL = "https://api.igdb.com/v4/games";
 
@@ -29,7 +31,7 @@ function getGame(gameName, isID = true, twitchClientID, igdbToken) {
         })
             .then((result) => result.json())
             .catch((e) => {
-                console.error("[ERROR]: ", e);
+                utils.log(e, utils.logLevels.error);
             });
 
         resolve(response);
@@ -63,7 +65,7 @@ function getGames(gameName, twitchClientID, igdbToken, getOnlyId = true, pageSiz
         })
             .then((result) => result.json())
             .catch((e) => {
-                console.error("[ERROR]: ", e);
+                utils.log(e, logLevels.error);
             });
 
         resolve(response);
@@ -94,17 +96,17 @@ async function getGamePlaytime(gameName) {
 async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
     const foundGames = await getGame(gameName, isID, twitchClientID, igdbToken);
 
-
     if (foundGames.length === 0) {
-        return;
+        throw new NotFoundError("Games was simply not found mtf");
     }
 
     let data = foundGames[0];
 
     if (isID) {
-        console.log(`[INFO]: Found data for "${data.name}" given the "${gameName}" ID!` );
+        utils.log(`Found data for "${data.name}" given the "${gameName}" ID!`, utils.logLevels.info)
     } else {
-        console.log(`[INFO]: Found data for "${data.name}" game!`);
+        utils.log(`Found data for "${data.name}" game!`,
+        utils.logLevels.info)
     }
 
     for (let i = 0; i < foundGames.length; i++) {
@@ -116,7 +118,7 @@ async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
 
     data.playtime = await getGamePlaytime(data.name);
 
-    data = assignToMissingResults(data);
+    data = utils.assignToMissingResults(data);
 
     const gameNewDate = data.first_release_date
         ? new Date(data.first_release_date * 1000).toLocaleString("en-US", {
@@ -145,7 +147,9 @@ async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
 
 // Function that queries from API and get a list of names + id for the given name
 async function queryList(gameName, twitchClientID, igdbToken, getOnlyId, pageSize, offset) {
-    const foundGames = await getGames(gameName, twitchClientID, igdbToken, getOnlyId, pageSize, offset);
+    const foundGames = await getGames(gameName, twitchClientID, igdbToken, getOnlyId, pageSize, offset).catch((e) => {
+        throw e;
+    });
 
     return foundGames;
 }
@@ -155,6 +159,8 @@ module.exports = {
         return await fetchGames(gameName, isID, twitchClientID, igdbToken);
     },
     async queryList(gameName, twitchClientID, igdbToken, getOnlyId, pageSize, offset) {
-        return await queryList(gameName, twitchClientID, igdbToken, getOnlyId, pageSize, offset);
+        return await queryList(gameName, twitchClientID, igdbToken, getOnlyId, pageSize, offset).catch((e) => {
+            throw e;
+        });
     }
 }

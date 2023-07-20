@@ -1,4 +1,5 @@
 const { SlashCommandBuilder} = require("discord.js");
+const utils = require("../utils");
 
 
 require("dotenv").config();
@@ -25,8 +26,8 @@ async function replyGame(interaction) {
     });
 
     interaction.reply({embeds: [gameEmbed]})
-        .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${queryUserInput}' request!`))
-        .catch((e) => {console.error("[ERROR]: ", e);});
+        .then(() => utils.log(`Bot found and properly replied '${queryUserInput}' request!`, utils.logLevels.success))
+        .catch((e) => utils.log(e, utils.logLevels.error));
 }
 
 module.exports = {

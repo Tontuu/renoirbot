@@ -1,4 +1,5 @@
 const { Client } = require("pg");
+const utils = require("./utils");
 
 async function connectToDatabase() {
     require("dotenv").config();
@@ -11,19 +12,21 @@ async function connectToDatabase() {
     });
 
     try {
-        await renoirDb.connect()
-        console.log("[SUCCESS:DB]: Sucessfully connected to database!");
+        await renoirDb.connect();
+        utils.log("Sucessfully connected to database!", utils.logLevels.success);
         return renoirDb;
     } catch (e) {
-        console.error("[ERROR:DB]: Could not connect to database:", e);
+        e.message = "Could not connect to database: " + e.message;
+        utils.log(e, utils.logLevels.error);
     }
 }
 
 async function endConnection(db) {
     db.end().then(() => {
-        console.log("[SUCCESS:DB]: Succesfully closed database connection");
+        utils.log("Succesfully closed database connection", utils.logLevels.success);
     }).catch((e) => {
-        console.error("[ERROR:DB]: Could not close database connection:", e);
+        e.message = "Could not close database connection: " + e.message;
+        utils.log(e, utils.logLevels.error);
     });
 }
 
@@ -35,7 +38,8 @@ async function getUser(db, user_id) {
     const text = `SELECT * FROM renoir_users WHERE user_id = '${user_id}'`;
 
     const res = await db.query(text).catch((e) => {
-        console.error("[ERROR:DB]: Could not get user from database:", e.message);
+        e.message = "Could not get user from database: " + e.message;
+        utils.log(e, utils.logLevels.error);
         throw e;
     })
 
@@ -43,7 +47,7 @@ async function getUser(db, user_id) {
         throw new Error("User doesn't have a favorite game");
     }
 
-    console.log(`[SUCCESS:DB] Sucessfully queried from database`);
+    utils.log("Sucessfully queried from database", utils.logLevels.success);
     return res.rows[0];
 }
 
@@ -57,17 +61,19 @@ async function addUser(db, user_id, username, favorite_game, favorite_game_id) {
         SELECT '${user_id}', '${username}', '${favorite_game}', ${favorite_game_id}
         WHERE NOT EXISTS (SELECT user_id FROM renoir_users WHERE user_id = '${user_id}');`;
 
-    // TODO: Vanish values before adding to database
-
     return await db.query(text).then((result) => {
         if (result.rowCount == 0){
             throw new Error("User has already been registered to database");
         } else {
-            console.log(`[SUCCESS:DB] Sucessfully added ${favorite_game} to ${username} database`);
+            utils.log(
+                `Sucessfully added ${favorite_game} to ${username} database`,
+                utils.logLevels.success
+                )
             return result;
         }
     }).catch((e) => {
-        console.error("[ERROR:DB]: Could not add user to database:", e.message);
+        e.message = "Could not add user to database: " + e.message;
+        utils.log(e, utils.logLevels.error);
         throw e;
     });
 }
@@ -80,11 +86,11 @@ async function removeUser(db, user_id){
         if (result.rowCount == 0) {
             throw Error("User doesn't have a registered game");
         } else {
-            console.log("[SUCCESS:DB] Sucessfully removed user from database");
+            utils.log("Sucessfully removed user from database", utils.logLevels.success);
             return result;
         }
     }).catch((e) => {
-        console.error("[ERROR:DB]: Could not remove user from database:", e.message);
+        utils.log(e, utils.logLevels.error);
         throw e;
     });
 }
@@ -97,10 +103,11 @@ async function updateUser(db, user_id, game) {
     `;
 
     await db.query(text).then((result) =>{
-        console.log("[SUCCESS:DB] Sucessfully updated user data");
+        utils.log("Sucessfully updated user data", utils.logLevels.success);
         return result;
     }).catch((e) => {
-        console.error("[ERROR:DB]: Could not update user data:", e.message);
+        e.message = "Could not update user data: " + e.message;
+        utils.log(e, utils.logLevels.error);
         throw e;
     });
 }
@@ -117,9 +124,10 @@ async function createTable(db) {
 
     await db.query(text)
     .then(() => {
-        console.log("[SUCCESS:DB] Sucessfully created table");
+        utils.log("Sucessfully created table", utils.logLevels.success);
     }).catch((e) => {
-        console.error("[ERROR:DB]: Could not create table:", e);
+        e.message = "Could not create table: " + e.message;
+        utils.log(e, utils.logLevels.error);
     });
 }
 
@@ -140,9 +148,10 @@ module.exports = {
         await addUser(db, userData.user_id, userData.username,
              userData.favorite_game, userData.favorite_game_id);
         db.end().then(() => {
-            console.log("[SUCCESS:DB]: Succesfully closed database connection");
+            utils.log("Succesfully closed database connection", utils.logLevels.success);
         }).catch((e) => {
-            console.error("[ERROR:DB]: Could not close database connection:", e);
+            e.message = "Could not close database connection: " + e.message;
+            utils.log(e, utils.logLevels.error);
         });
     },
     async createTable() {

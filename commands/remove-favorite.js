@@ -4,7 +4,6 @@ async function replyRemoveFavoriteGame(interaction) {
     const db = require("../db");
 
     await db.removeUser(interaction.user.id).then(async (result) => {
-        console.log(result);
         await interaction.reply({
             content: `Sucessfully removed your favorite game!`, 
             embeds: [],

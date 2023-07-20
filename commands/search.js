@@ -1,7 +1,7 @@
 const {SlashCommandBuilder, bold} = require("discord.js");
+const { CanceledError, NotFoundError } = require("../errors");
 const utils = require("../utils");
 const game = require("../query");
-
 require("dotenv").config();
 
 const RANDOM_COLORS = [
@@ -17,11 +17,13 @@ async function getInteractionResponse(interaction, replyCallback) {
     const collectorFilter = (i) => i.user.id === interaction.user.id;
     return replyCallback.awaitMessageComponent({filter: collectorFilter, time: 60000})
         .then((response) => {
-            console.log(`[INFO]: '${interaction.user.username}' replied to interaction menu`);
+            utils.log(
+                `'${interaction.user.username}' replied to interaction menu`,
+                 utils.logLevels.success)
             return response;
         })
         .catch((e) => {
-            console.error("[ERROR]:", e.message);
+            utils.log(e, utils.logLevels.error);
             return null;
         });
 }
@@ -32,13 +34,11 @@ async function nextPage(gameName, gameList, pageSize, offset) {
     gameList = await game.queryList(gameName, twitchClientID, igdbToken, true, pageSize, offset + pageSize);
     if (gameList.length == 0 || gameList.length < pageSize) {
         if (gameList.length == 0) {
-            console.log("try agaiN!");
-            console.log(
-                "[ERROR]: You cannot go to next page, there's no more games to seek because the next is empty",
-            );
+            const e = {message: "You cannot go to next page, there's no more games to seek because the next is empty"};
+            utils.log(e, utils.logLevels.error);
             gameList = lastGameList;
         } else if (gameList.length < lastGameList.length) {
-            console.log("[INFO]: You're in the last page, pay attention!");
+            utils.log("You're in the last page, pay attention!", utils.logLevels.info);
             offset += pageSize;
         }
     } else {
@@ -53,8 +53,8 @@ async function nextPage(gameName, gameList, pageSize, offset) {
 
 async function previousPage(gameName, gameList, pageSize, offset) {
     if (offset - pageSize < 0) {
-        console.log("try agaiN!");
-        console.log("[ERROR-4]: You cannot go to previous page, the offset will be less than 0");
+        const e = {message: "You cannot go to previous page, the offset will be less than 0"};
+        utils.log(e, utils.logLevels.error);
     } else {
         offset -= pageSize;
         gameList = await game.queryList(gameName, twitchClientID, igdbToken, true, pageSize, offset);
@@ -70,9 +70,14 @@ async function getList(interaction) {
     const user = interaction.user;
     const queryUserInput = interaction.options.getString("game");
 
-    console.log(`[INFO]: ${user.username} requested a list for '${queryUserInput}'!`);
+    utils.log(`${user.username} requested a list for '${queryUserInput}'!`,
+         utils.logLevels.info);
 
     let gameList = await game.queryList(queryUserInput, twitchClientID, igdbToken, true, pageSize);
+    if (gameList.length == 0) {
+        throw new NotFoundError(`${queryUserInput} requested by ${user.username} was not found`);
+    }
+
     let gameData;
     let randomColor = RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
     let listEmbed = utils.buildListEmbed(gameList, queryUserInput, randomColor, false);
@@ -104,13 +109,7 @@ async function getList(interaction) {
 
         if (userResponse.customId == "cancel") {
             await interaction.deleteReply();
-
-            await userResponse.reply({
-                content: `You cancelled the '${bold(queryUserInput)}' search!`,
-                embeds: [],
-                components: [],
-                ephemeral: true })
-            seeking = false;
+            throw new Error(`'${user.username}' canceled the interaction`);
         }
 
         if (userResponse.customId == "nextpage") {
@@ -120,7 +119,7 @@ async function getList(interaction) {
             listEmbed = utils.buildListEmbed(gameList, queryUserInput, randomColor, false);
             listComponent = utils.buildComponent(gameList);
             await userResponse.update({embeds: [listEmbed], components: listComponent, ephemeral: true}).catch((e) => {
-                console.error("[ERROR]: ", e);
+                utils.log(e, utils.logLevels.error);
             })
         }
 
@@ -147,17 +146,36 @@ async function getList(interaction) {
         }
 
     }
-    return [userResponse, {embeds: [listEmbed], components:[], ephemeral: false}, null ?? gameData]
+    return {
+        res: userResponse,
+        value: {embeds: [listEmbed], components:[], ephemeral: false},
+        gameData: null ?? gameData
+    }
 }
 
 async function replyList(interaction) {
-    [userResponse, value] = await getList(interaction);
+    const resObj = await getList(interaction).catch(async (e) => {
+        utils.log(e.message, utils.logLevels.info);
+        if (e instanceof CanceledError) {
+            await interaction.followUp({
+                content: `You canceled the search!`,
+                ephemeral: true })
+        } else if (e instanceof NotFoundError) {
+            await interaction.reply({
+                content: `'${interaction.options.getString("game")}' was not found`,
+                ephemeral: false })
+        } else {
+            utils.log(e, utils.logLevels.error);
+        }
+    });
 
-    await userResponse.update(value)
-        .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${interaction.user.username}' request!`))
-        .catch((e) => {
-            console.error("[ERROR]:", e);
-        });
+    if (resObj) {
+        await userResponse.update(value)
+            .then(() => utils.log(`Bot found and properly replied '${interaction.user.username}' request!`, utils.logLevels.success))
+            .catch((e) => {
+                utils.log(e, utils.logLevels.error);
+            });
+    }
 }
 
 module.exports = {
@@ -174,7 +192,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await replyList(interaction);
+        return await replyList(interaction);
     },
 
     async getList(interaction) {

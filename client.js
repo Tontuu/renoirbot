@@ -1,11 +1,15 @@
-// TODO: Handle invalid tokens
+const utils = require("./utils");
 const db = require("./db");
 const fs = require("node:fs");
 const path = require("node:path");
 const express = require("express");
-const { Client, Events, GatewayIntentBits, Collection, ActivityType } = require("discord.js");
-// Setup constants
-const ERROR_MSG = "Meow, i think you missed how to use the command properly!!! o_O";
+const {
+    Client,
+    Events,
+    GatewayIntentBits,
+    Collection, 
+    ActivityType
+ } = require("discord.js");
 
 // Setup dotenv and get bot token
 require("dotenv").config();
@@ -26,7 +30,7 @@ for (const file of commandsFiles) {
     if ("data" in command && "execute" in command) {
         client.commands.set(command.data.name, command);
     } else {
-        console.log(`[ERROR]: Missing ${filePath}`);
+        utils.log(`Missing ${filePath}`, utils.logLevels.error);
     }
 }
 
@@ -36,18 +40,16 @@ client.on(Events.InteractionCreate, async interaction => {
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
-        console.error(`[ERROR]: Unknown command: ${interaction.commandName}`)
+        utils.log(
+            `Unknown command: ${interaction.commandName}`,
+            utils.logLevels.error);
         return;
     }
     try {
         await command.execute(interaction, client);
     } catch (e) {
-        console.error(e);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: ERROR_MSG, ephemeral: true });
-        } else {
-            await interaction.reply({ content: ERROR_MSG, ephemeral: true });
-		}
+        e.message = "Error on Client: " + e.message;
+        utils.log(e, utils.logLevels.error);
     }
 })
 
@@ -55,18 +57,18 @@ client.on(Events.InteractionCreate, async interaction => {
     
 // Client only run once;
 client.once(Events.ClientReady, c => {
-    console.log(`[INFO]: ${c.user.tag} is UP!`);
+    utils.log(`${c.user.tag} is UP!`, utils.logLevels.success);
     client.user.setActivity('Pantheon', { type: ActivityType.Competing });
 })
 
 client.login(discordToken).then(() => {
     app.listen(port, () => {
-        console.log(`[INFO]: Running server on 'http://localhost:${port}'`);
+        utils.log(`Running server on 'http://localhost:${port}'`,
+                utils.logLevels.success);
         db.createTable();
     })
 }).catch((e) => {
-    console.error("[ERROR]: Invalid token");
-    process.exit();
+    utils.log(e, utils.logLevels.fatal);
 });
 
 // Server

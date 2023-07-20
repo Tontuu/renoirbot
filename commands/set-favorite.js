@@ -1,11 +1,15 @@
 const { SlashCommandBuilder} = require("discord.js");
 const searchGame = require("./search").getList;
+const utils = require("../utils");
 
 async function replySetFavoriteGame(interaction) {
-    const [interactionRes, _interactionValue, gameData] = await searchGame(interaction);
+    const [interactionRes, _interactionValue, gameData] = await searchGame(interaction).catch((e) => {
+        utils.log(e, utils.logLevels.error);
+    });
 
     if (!gameData) {
-        console.log("[ERROR]: Favorite game is undefined!!!");
+        const e = {message: "Favorite game is undefined!!!"};
+        utils.log(e, utils.logLevels.error);
         return false;
     }
 

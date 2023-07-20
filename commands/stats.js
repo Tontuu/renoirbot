@@ -6,7 +6,8 @@ async function replyStats(interaction, client) {
     let start = new Date();
 
     const stats = await fetch("http://localhost:2000/stats").then((result) => {
-        console.log(`[INFO]: '${interaction.user.username}' Requested for status`)
+        utils.log(`'${interaction.user.username}' Requested for status`,
+                    utils.logLevels.info);
 
         return result.json();
     });

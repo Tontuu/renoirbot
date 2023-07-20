@@ -1,6 +1,85 @@
 const {EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, inlineCode, bold} = require("discord.js");
-
 const ICON_URL = "https://cdn.discordapp.com/avatars/1126190008492109864/9cc14e6f7432306ba2195a9c2fef4614.png";
+const { createLogger, format, transports } = require("winston");
+const { combine, timestamp, prettyPrint, errors,  } = format;
+const CONSTANTS = require("./constants");
+const logLevels = CONSTANTS.LOG.LEVEL;
+
+function log(value, level) {
+    let logger = createLogger({
+            levels: CONSTANTS.LOG.LEVEL,
+            format: combine(
+                errors({ stack: true }),
+                timestamp(),
+                prettyPrint()
+            )
+    });
+    const date = Date.now();
+    
+    if (level === logLevels.fatal) {
+        if (CONSTANTS.STAGE === "DEBUG" || CONSTANTS.STAGE === "RELEASE") {
+            if (CONSTANTS.STAGE === "DEBUG") {
+                logger.add(new transports.File({ filename: CONSTANTS.LOG.FILES.fatal, level: "fatal" }));
+                console.log("[FATAL]: " + value.message + "\n[STACKTRACE]: " + value.stack);
+            } else {
+                console.error(`[FATAL]: ${value.message} - ${date}`);
+                logger = createLogger({
+                    format: combine(errors(), timestamp(), format.json()),
+                    filename: CONSTANTS.LOG.FILES.fatal,
+                    levels: CONSTANTS.LOG.LEVEL });
+                logger.add(new transports.File({ filename: CONSTANTS.LOG.FILES.fatal, level: "fatal" }));
+            }            
+            logger.fatal(value.message, () => process.exit(1));
+        } 
+        if (CONSTANTS.STAGE === "DEVELOPMENT") {
+            console.error(`[FATAL]: ${value.message} - ${date}`);
+            process.exit(1);
+        }
+    }
+    if (level === logLevels.error) {
+        if (CONSTANTS.STAGE === "DEBUG" || CONSTANTS.STAGE === "RELEASE") {
+            logger.add(new transports.File({ filename: CONSTANTS.LOG.FILES.error, level: "error" }));
+            if (CONSTANTS.STAGE === "DEBUG") {
+                console.log("[ERROR]: " + value.message + " - " + date + "\n[STACKTRACE]: " + value.stack);
+            } else {
+                logger = createLogger({
+                    format: combine(errors(), timestamp(), format.json()),
+                    filename: CONSTANTS.LOG.FILES.error,
+                    levels: CONSTANTS.LOG.LEVEL });
+                logger.add(new transports.File({ filename: CONSTANTS.LOG.FILES.error, level: "error" }));
+                console.error(`Something went wrong, check 'errors.log' for more informations! - ${date}`);
+            }             
+            logger.error(value.message)
+        } 
+        if (CONSTANTS.STAGE === "DEVELOPMENT") {
+            console.error(`[ERROR]: ${value.message} - ${date}`);
+        }
+
+    }
+    if (level === logLevels.info) {
+        if (CONSTANTS.STAGE === "DEBUG") {
+            logger.add(new transports.File({ filename: CONSTANTS.LOG.FILES.info, level: "info" }));
+            console.log("[INFO]: " + value + " - " + date);
+            logger.info(value);
+        }
+        if (CONSTANTS.STAGE === "DEVELOPMENT") {
+            console.log(`[INFO]: ${value} - ${date}`);
+        }
+    }
+
+    if (level === logLevels.success) {
+        if (CONSTANTS.STAGE === "DEBUG") {
+            logger.add(new transports.File({ filename: CONSTANTS.LOG.FILES.info, level: "success" }));
+            console.log("[SUCCESS]: " + value + " - " + date);
+            logger.success(value);
+        }
+        if (CONSTANTS.STAGE === "DEVELOPMENT") {
+            console.log("[SUCCESS]: " + value);
+        }
+    }
+
+    logger.end();
+}
 
 function assignToMissingResults(gameData) {
     if (typeof gameData.url === "undefined") {
@@ -150,7 +229,7 @@ function buildGameEmbed(gameData, color, setTimestamp = false) {
         embedCtx.setTimestamp();
     }
 
-    console.log("[SUCCESS]: Embed sucessfully created!");
+    log("Embed sucessfully created!", logLevels.success);
 
     return embedCtx;
 }
@@ -177,7 +256,7 @@ function buildListEmbed(gameList, input, color, setTimestamp = true) {
             embedCtx.addFields({name: "\u200B", value: " " })
         }
     }
-    console.log("[SUCCESS]: Embed sucessfully created!");
+    log("Embed sucessfully created!", logLevels.success);
     return embedCtx;
 }
 
@@ -291,7 +370,7 @@ function buildMenuOptions(placeholder, gameList) {
                               .setValue(`${i+1}`))
     }
 
-    console.log("[SUCCESS]: Menu Option sucessfully created!");
+    log("Menu Option sucessfully created!", logLevels.success)
     return optionMenu;
 }
 
@@ -325,6 +404,10 @@ function buildComponent(gameList) {
 }
 
 module.exports = {
+    logLevels: CONSTANTS.LOG.LEVEL,
+    log(message, level) {
+        return log(message, level);
+    },
     buildHelpEmbed(color, title, author, iconURL, description, commandField, source, username) {
         return buildHelpEmbed(color, title, author, iconURL, description, commandField, source, username);
     },
