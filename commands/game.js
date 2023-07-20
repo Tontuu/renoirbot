@@ -16,8 +16,18 @@ const RANDOM_COLORS = [
 // Construct Embed message
 async function replyGame(interaction) {
     const user = interaction.user;
-    const queryUserInput = interaction.options.getString("game");
-    const gameData = await game.fetchGames(queryUserInput, isID = false, twitchClientID, igdbToken);
+    const queryUserInput = interaction.options.getString("name");
+    const gameData = await game.fetchGames(queryUserInput, isID = false, twitchClientID, igdbToken).catch(async (e) => {
+        utils.log(e, utils.logLevels.info);
+        await interaction.reply({
+            content: `'${queryUserInput}' was not found`,
+            ephemeral: false })
+    });
+
+    if (!gameData) {
+        return;
+    }
+
     const randomColor = RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
     const gameEmbed = utils.buildGameEmbed(gameData, randomColor, (setTimestamp = true));
     gameEmbed.setFooter({

@@ -148,8 +148,8 @@ async function getList(interaction) {
     }
     return {
         res: userResponse,
-        value: {embeds: [listEmbed], components:[], ephemeral: false},
-        gameData: null ?? gameData
+        args: {embeds: [listEmbed], components:[], ephemeral: false},
+        gameData: gameData
     }
 }
 
@@ -170,7 +170,7 @@ async function replyList(interaction) {
     });
 
     if (resObj) {
-        await userResponse.update(value)
+        await resObj.res.update(resObj.args)
             .then(() => utils.log(`Bot found and properly replied '${interaction.user.username}' request!`, utils.logLevels.success))
             .catch((e) => {
                 utils.log(e, utils.logLevels.error);

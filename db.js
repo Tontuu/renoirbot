@@ -61,9 +61,12 @@ async function addUser(db, user_id, username, favorite_game, favorite_game_id) {
         SELECT '${user_id}', '${username}', '${favorite_game}', ${favorite_game_id}
         WHERE NOT EXISTS (SELECT user_id FROM renoir_users WHERE user_id = '${user_id}');`;
 
-    return await db.query(text).then((result) => {
+    return await db.query(text).then(async (result) => {
         if (result.rowCount == 0){
-            throw new Error("User has already been registered to database");
+            await updateUser(db, user_id, {
+                favorite_game: favorite_game,
+                 favorite_game_id: favorite_game_id
+                });
         } else {
             utils.log(
                 `Sucessfully added ${favorite_game} to ${username} database`,
@@ -108,7 +111,6 @@ async function updateUser(db, user_id, game) {
     }).catch((e) => {
         e.message = "Could not update user data: " + e.message;
         utils.log(e, utils.logLevels.error);
-        throw e;
     });
 }
 
@@ -123,8 +125,12 @@ async function createTable(db) {
         );`;
 
     await db.query(text)
-    .then(() => {
-        utils.log("Sucessfully created table", utils.logLevels.success);
+    .then((result) => {
+        if (result.rowCount === null) {
+            utils.log("Database already got a renoir_users table", utils.logLevels.info);
+        } else {
+            utils.log("Sucessfully created table", utils.logLevels.success);
+        }
     }).catch((e) => {
         e.message = "Could not create table: " + e.message;
         utils.log(e, utils.logLevels.error);

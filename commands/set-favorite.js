@@ -1,34 +1,44 @@
 const { SlashCommandBuilder} = require("discord.js");
-const searchGame = require("./search").getList;
+const getList = require("./search").getList;
 const utils = require("../utils");
 
 async function replySetFavoriteGame(interaction) {
-    const [interactionRes, _interactionValue, gameData] = await searchGame(interaction).catch((e) => {
-        utils.log(e, utils.logLevels.error);
+    const resObj = await getList(interaction).catch(async (e) => {
+        utils.log(e.message, utils.logLevels.info);
+        if (e instanceof CanceledError) {
+            await interaction.followUp({
+                content: `You canceled the search!`,
+                ephemeral: true })
+        } else if (e instanceof NotFoundError) {
+            await interaction.reply({
+                content: `'${interaction.options.getString("game")}' was not found`,
+                ephemeral: false })
+        } else {
+            utils.log(e, utils.logLevels.error);
+        }
     });
 
-    if (!gameData) {
-        const e = {message: "Favorite game is undefined!!!"};
-        utils.log(e, utils.logLevels.error);
-        return false;
+    if (!resObj) {
+        return;
     }
 
     const userData = {
-        user_id: interactionRes.user.id,
-        username: interactionRes.user.username,
-        favorite_game: gameData.name,
-        favorite_game_id: gameData.id
+        user_id: resObj.res.user.id,
+        username: resObj.res.user.username,
+        favorite_game: resObj.gameData.name,
+        favorite_game_id: resObj.gameData.id
     };
 
     const db = require("../db");
     await db.addUser(userData).then(async (result) => {
-        await interactionRes.update({
-            content: `Sucessfully added '${gameData.name}' as your favorite game!`, 
+        await resObj.res.update({
+            content: `Sucessfully added '${resObj.gameData.name}' as your favorite game!`, 
             embeds: [],
             components: []
         });
     }).catch(async (e) => {
-        await interactionRes.update({
+        utils.log(e, utils.logLevels.error);
+        await resObj.res.update({
             content: `${e.message}`, 
             embeds: [],
             components: [],
