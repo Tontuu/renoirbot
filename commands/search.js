@@ -154,7 +154,7 @@ async function replyList(interaction) {
     [userResponse, value] = await getList(interaction);
 
     await userResponse.update(value)
-        .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${queryUserInput}' request!`))
+        .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${interaction.user.username}' request!`))
         .catch((e) => {
             console.error("[ERROR]:", e);
         });
