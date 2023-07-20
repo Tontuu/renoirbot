@@ -242,6 +242,39 @@ function buildStatsEmbed(stats, hardware, interaction, client) {
     return embedCtx;
 }
 
+function buildProfileEmbed(userProfile, gameData, interaction) {
+    let user = interaction.user;
+
+    user.username = user.username.charAt(0).toUpperCase() + user.username.slice(1);
+
+    embedCtx = new EmbedBuilder();
+
+    embedCtx.setAuthor({name: user.username});
+    embedCtx.setColor(0x0000FF);
+    embedCtx.setTimestamp()
+    embedCtx.setThumbnail(`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`);
+    embedCtx.addFields(
+    {
+        name: " ",
+        value: "\u200B",
+    },
+    {
+        name: "Favorite Game",
+        value: `[${userProfile.favorite_game}](${gameData.url})`,
+    },
+    {
+        name: " ",
+        value: "\u200B",
+    },
+    );
+
+    embedCtx.setFooter({
+        text: "Requested by: " + user.username,
+    });
+
+    return embedCtx;
+}
+
 function buildMenuOptions(placeholder, gameList) {
     if (!placeholder) {
         throw new Error("Placeholder was not provided");
@@ -303,6 +336,9 @@ module.exports = {
     },
     buildStatsEmbed(stats, hardware, interaction, client) {
         return buildStatsEmbed(stats, hardware, interaction, client);
+    },
+    buildProfileEmbed(userProfile, gameData, interaction) {
+        return buildProfileEmbed(userProfile, gameData, interaction);
     },
     buildMenuOptions(placeholder, gameList) {
         return buildMenuOptions(placeholder, gameList);

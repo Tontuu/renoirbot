@@ -66,13 +66,14 @@ async function previousPage(gameName, gameList, pageSize, offset) {
     };
 }
 
-async function replyList(interaction) {
+async function getList(interaction) {
     const user = interaction.user;
     const queryUserInput = interaction.options.getString("game");
 
     console.log(`[INFO]: ${user.username} requested a list for '${queryUserInput}'!`);
 
     let gameList = await game.queryList(queryUserInput, twitchClientID, igdbToken, true, pageSize);
+    let gameData;
     let randomColor = RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
     let listEmbed = utils.buildListEmbed(gameList, queryUserInput, randomColor, false);
     let listComponent = utils.buildComponent(gameList);
@@ -81,6 +82,7 @@ async function replyList(interaction) {
     let seeking = true;
     let isFirstLoop = true;
     let gameChoice = null;
+    let userResponse;
     while (seeking) {
         if (isFirstLoop) {
             replyCallback = await interaction.reply({embeds: [listEmbed], components: listComponent});
@@ -89,7 +91,7 @@ async function replyList(interaction) {
             replyCallback = await interaction.editReply({embeds: [listEmbed], components: listComponent})
         }
         
-        const userResponse = await getInteractionResponse(interaction, replyCallback);
+        userResponse = await getInteractionResponse(interaction, replyCallback);
 
         if (!userResponse) {
             await interaction.editReply({
@@ -117,7 +119,9 @@ async function replyList(interaction) {
             offset = result.offset;
             listEmbed = utils.buildListEmbed(gameList, queryUserInput, randomColor, false);
             listComponent = utils.buildComponent(gameList);
-            await userResponse.update({embeds: [listEmbed], components: listComponent, ephemeral: true})
+            await userResponse.update({embeds: [listEmbed], components: listComponent, ephemeral: true}).catch((e) => {
+                console.error("[ERROR]: ", e);
+            })
         }
 
         if (userResponse.customId == "previouspage") {
@@ -132,22 +136,28 @@ async function replyList(interaction) {
         if (userResponse.customId == "option-menu") {
             const choice = userResponse.values[0];
             gameChoice = gameList[choice - 1];
-            gameData = await game.query(gameChoice.id, true, twitchClientID, igdbToken);
+            gameData = await game.fetchGames(gameChoice.id, true, twitchClientID, igdbToken);
             listEmbed = utils.buildGameEmbed(gameData, randomColor, true);
             listEmbed.setFooter({
                 text: "Requested by: " + user.username,
                 iconURL: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`,
             });
 
-            await userResponse.update({embeds: [listEmbed], components: [], ephemeral: false})
-                .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${queryUserInput}' request!`))
-                .catch((e) => {
-                    console.error("[ERROR]:", e);
-                });
             seeking = false;
         }
 
+        return [userResponse, {embeds: [listEmbed], components:[], ephemeral: false}, null ?? gameData]
     }
+}
+
+async function replyList(interaction) {
+    [userResponse, value] = await getList(interaction);
+
+    await userResponse.update(value)
+        .then(() => console.log(`[SUCCESS]: Bot found and properly replied '${queryUserInput}' request!`))
+        .catch((e) => {
+            console.error("[ERROR]:", e);
+        });
 }
 
 module.exports = {
@@ -166,4 +176,8 @@ module.exports = {
     async execute(interaction) {
         await replyList(interaction);
     },
-};
+
+    async getList(interaction) {
+        return await getList(interaction)
+    }
+}

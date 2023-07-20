@@ -16,7 +16,7 @@ const RANDOM_COLORS = [
 async function replyGame(interaction) {
     const user = interaction.user;
     const queryUserInput = interaction.options.getString("game");
-    const gameData = await game.query(queryUserInput, isID = false, twitchClientID, igdbToken);
+    const gameData = await game.fetchGames(queryUserInput, isID = false, twitchClientID, igdbToken);
     const randomColor = RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
     const gameEmbed = utils.buildGameEmbed(gameData, randomColor, (setTimestamp = true));
     gameEmbed.setFooter({

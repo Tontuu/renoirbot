@@ -1,3 +1,5 @@
+// TODO: Handle invalid tokens
+const db = require("./db");
 const fs = require("node:fs");
 const path = require("node:path");
 const express = require("express");
@@ -49,15 +51,23 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 })
 
+
+    
 // Client only run once;
 client.once(Events.ClientReady, c => {
     console.log(`[INFO]: ${c.user.tag} is UP!`);
     client.user.setActivity('Pantheon', { type: ActivityType.Competing });
 })
 
-client.login(discordToken);
-
-
+client.login(discordToken).then(() => {
+    app.listen(port, () => {
+        console.log(`[INFO]: Running server on 'http://localhost:${port}'`);
+        db.createTable();
+    })
+}).catch((e) => {
+    console.error("[ERROR]: Invalid token");
+    process.exit();
+});
 
 // Server
 const app = express();
@@ -78,6 +88,3 @@ app.get("/stats", (req, res) => {
     }
 })
 
-app.listen(port, () => {
-    console.log(`[INFO]: Running server on 'http://localhost:${port}'`);
-})
