@@ -15,7 +15,7 @@ const {
 require("dotenv").config();
 const discordToken = process.env.DISCORDTOKEN;
 
-// Setup main client
+//Setup main client
 const client = new Client({intents:[GatewayIntentBits.Guilds]});
 
 // Setup commands
@@ -56,6 +56,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
     
 // Client only run once;
+const app = express();
+const port = 2000;
 client.once(Events.ClientReady, c => {
     utils.log(`${c.user.tag} is UP!`, utils.logLevels.success);
     client.user.setActivity('Pantheon', { type: ActivityType.Competing });
@@ -73,10 +75,6 @@ client.login(discordToken).then(() => {
     utils.log(e, utils.logLevels.fatal);
 });
 
-// Server
-const app = express();
-const port = 2000;
-
 app.get("/stats", (req, res) => {
     const stats = {
         uptime: process.uptime().toFixed(2) + "s",
@@ -92,3 +90,26 @@ app.get("/stats", (req, res) => {
     }
 })
 
+app.get("/wake", (req, res) => {
+    try {
+        res.send({
+            status: res.statusCode,
+            message: "IM AWAKE!",
+        });
+        utils.log("Waking up renoir", utils.logLevels.info);
+    } catch (e) {
+        res.status = e;
+        res.send();
+    }
+})
+
+// Function that provides a periodic check to set up server to run on RENDER server
+var wakeUpRenoir = setInterval(async () => {
+    const res = await fetch("http://localhost:2000/wake", {
+        method: "GET",
+    });
+
+    if (!res.ok) {
+        utils.log(new Error(`Request failed with status ${res.status}`), utils.logLevels.fatal)
+    } 
+}, 600000);
