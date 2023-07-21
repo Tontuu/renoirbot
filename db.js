@@ -9,6 +9,7 @@ async function connectToDatabase() {
         user: process.env.DB_USER,
         password: process.env.DB_PASS,
         database: process.env.DB,
+        ssl: true
     });
 
     try {
