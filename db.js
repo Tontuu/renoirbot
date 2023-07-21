@@ -4,7 +4,7 @@ const utils = require("./utils");
 async function connectToDatabase() {
     require("dotenv").config();
     const renoirDb = new Client({
-        host: "127.0.0.1",
+        host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         user: process.env.DB_USER,
         password: process.env.DB_PASS,
@@ -18,6 +18,7 @@ async function connectToDatabase() {
     } catch (e) {
         e.message = "Could not connect to database: " + e.message;
         utils.log(e, utils.logLevels.error);
+        throw e;
     }
 }
 
@@ -134,6 +135,7 @@ async function createTable(db) {
     }).catch((e) => {
         e.message = "Could not create table: " + e.message;
         utils.log(e, utils.logLevels.error);
+        throw e;
     });
 }
 
@@ -161,8 +163,12 @@ module.exports = {
         });
     },
     async createTable() {
-        const db = await connectToDatabase();
-        await createTable(db);
+        const db = await connectToDatabase().catch((e) => {
+            throw e;
+        });
+        await createTable(db).catch((e) => {
+            throw e;
+        });
         endConnection(db);
     },
     async removeUser(user_id) {

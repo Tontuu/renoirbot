@@ -65,7 +65,9 @@ client.login(discordToken).then(() => {
     app.listen(port, () => {
         utils.log(`Running server on 'http://localhost:${port}'`,
                 utils.logLevels.success);
-        db.createTable();
+        db.createTable().catch((e) => {
+            throw e;
+        });
     })
 }).catch((e) => {
     utils.log(e, utils.logLevels.fatal);
