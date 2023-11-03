@@ -89,27 +89,3 @@ app.get("/stats", (req, res) => {
         res.status(503).send();
     }
 })
-
-app.get("/wake", (req, res) => {
-    try {
-        res.send({
-            status: res.statusCode,
-            message: "IM AWAKE!",
-        });
-        utils.log("Waking up renoir", utils.logLevels.info);
-    } catch (e) {
-        res.status = e;
-        res.send();
-    }
-})
-
-// Function that provides a periodic check to set up server to run on RENDER server
-var wakeUpRenoir = setInterval(async () => {
-    const res = await fetch("http://localhost:2000/wake", {
-        method: "GET",
-    });
-
-    if (!res.ok) {
-        utils.log(new Error(`Request failed with status ${res.status}`), utils.logLevels.fatal)
-    } 
-}, 600000);
