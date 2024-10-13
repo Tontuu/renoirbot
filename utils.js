@@ -128,15 +128,6 @@ function assignToMissingResults(gameData) {
         ];
     }
 
-    if (typeof gameData.playtime === "undefined") {
-        gameData.playtime = null;
-    } else {
-        gameData.playtime =
-            `Hastily: ${gameData.playtime.gameplayMain}h\n` +
-            `Normally: ${gameData.playtime.gameplayExtra}h\n` +
-            `Completely: ${gameData.playtime.gameplayCompletionist}h`;
-    }
-
     return gameData;
 }
 
@@ -176,10 +167,6 @@ function buildGameEmbed(gameData, color, setTimestamp = false) {
     }
 
     embedCtx.addFields({name: "\u200B", value: " "});
-
-    if (gameData.playtime) {
-        embedCtx.addFields({name: "Playtime", value: gameData.playtime, inline:true})
-    }
 
     if (gameData.rating) {
         embedCtx.addFields({name: "Rating", value: gameData.rating, inline:true})

@@ -1,20 +1,16 @@
 const { Client } = require("pg");
 const utils = require("./utils");
+const { connectionString } = require("pg/lib/defaults");
 
 async function connectToDatabase() {
     require("dotenv").config();
     const renoirDb = new Client({
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB,
-        ssl: true
+        connectionString: process.env.DB_URL
     });
 
     try {
         await renoirDb.connect();
-        utils.log("Sucessfully connected to database!", utils.logLevels.success);
+        utils.log("Successfully connected to database!", utils.logLevels.success);
         return renoirDb;
     } catch (e) {
         e.message = "Could not connect to database: " + e.message;

@@ -15,12 +15,12 @@ async function replyStats(interaction, client) {
 
     
     const hardware = {
-        cpu: os.cpus()[0].model,
+        cpu: "Hamster",
         cores: os.cpus().length,
         os: os.type(),
-        host: os.hostname(),
-        mem: (os.totalmem() / (1024 * 1024 * 1024)).toFixed(2) + "Gb",
-        uptime: (os.uptime() / 3600).toFixed(2) + "h",
+        host: "O Deus da porra toda",
+        mem: "Todos os GBs",
+        uptime: (os.uptime() / 3600).toFixed(2) + "h (única informação realmente real)",
     }
 
     const statsEmbed = utils.buildStatsEmbed(stats, hardware, interaction, client);

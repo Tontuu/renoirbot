@@ -1,11 +1,10 @@
-const { error } = require("winston");
 const utils = require("./utils");
 const { NotFoundError } = require("./errors");
 
 const URL = "https://api.igdb.com/v4/games";
 
 function getGame(gameName, isID = true, twitchClientID, igdbToken) {
-    const game = new Promise((resolve) => {
+    const game = new Promise((resolve, reject) => {
         let body;
         if (isID) {
             body = `fields name, involved_companies.company.name, cover.image_id,
@@ -32,6 +31,7 @@ function getGame(gameName, isID = true, twitchClientID, igdbToken) {
             .then((result) => result.json())
             .catch((e) => {
                 utils.log(e, utils.logLevels.error);
+                reject();
             });
 
         resolve(response);
@@ -40,7 +40,7 @@ function getGame(gameName, isID = true, twitchClientID, igdbToken) {
 }
 
 function getGames(gameName, twitchClientID, igdbToken, getOnlyId = true, pageSize = 5, offset) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         let body;
         if (getOnlyId) {
             if (offset) {
@@ -66,35 +66,19 @@ function getGames(gameName, twitchClientID, igdbToken, getOnlyId = true, pageSiz
             .then((result) => result.json())
             .catch((e) => {
                 utils.log(e, logLevels.error);
+                reject();
             });
 
         resolve(response);
     });
 }
 
-async function getGamePlaytime(gameName) {
-    let hltb = require("howlongtobeat");
-    let hltbService = new hltb.HowLongToBeatService();
-
-    let gamePlaytimes = undefined;
-
-    await hltbService.search(gameName).then((result) => {
-        if (result !== undefined && result.length > 0) {
-            gamePlaytimes = {
-                gameplayMain: result[0].gameplayMain,
-                gameplayExtra: result[0].gameplayMainExtra,
-                gameplayCompletionist: result[0].gameplayCompletionist,
-            };
-        }
-    });
-
-    return gamePlaytimes;
-}
-
 // Function that fetchGames from api based on ID or name of the game and returns an
 // object with relevant metadata
 async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
-    const foundGames = await getGame(gameName, isID, twitchClientID, igdbToken);
+    const foundGames = await getGame(gameName, isID, twitchClientID, igdbToken).catch((e) => {
+        throw e;
+    });
 
     if (foundGames.length === 0) {
         throw new NotFoundError("Games was simply not found mtf");
@@ -114,10 +98,6 @@ async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
             data = foundGames[i];
         }
     }
-
-
-    data.playtime = await getGamePlaytime(data.name);
-
     data = utils.assignToMissingResults(data);
 
     const gameNewDate = data.first_release_date
@@ -138,10 +118,8 @@ async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
         platforms: data.platforms,
         rating: data.rating,
         developers: data.involved_companies,
-        playtime: data.playtime,
         description: data.summary,
     };
-
     return gameObj;
 }
 

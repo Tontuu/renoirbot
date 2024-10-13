@@ -1,0 +1,32 @@
+version: '3.4'
+services:
+  app:
+    restart: always
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
+      IGDB_POST_TOKEN: ${IGDB_POST_TOKEN}
+      DB_URL: postgres://renoir:pass@postgres:5432/db
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app/
+      - /app/node_modules
+
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: renoir
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+
+volumes:
+  db-data:
