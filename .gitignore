@@ -1,3 +1,6 @@
+__pycache__/
+*.py[cod]
+
 .env
 
 # Logs
@@ -130,3 +133,4 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+

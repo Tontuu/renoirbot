@@ -73,6 +73,28 @@ function getGames(gameName, twitchClientID, igdbToken, getOnlyId = true, pageSiz
     });
 }
 
+// Calls Python local endpoint that serves from howlongtobeatAPI
+async function getGamePlaytime(gameName) {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/playtime/${gameName}`);
+        const data = await response.json();
+        let result = {
+            gameplayMain: data.main_story,
+            gameplayExtra: data.main_extra,
+            gameplayCompletionist: data.completionist
+        };
+
+        result.gameplayMain = parseInt(result.gameplayMain);
+        result.gameplayExtra = parseInt(result.gameplayExtra);
+        result.gameplayCompletionist = parseInt(result.gameplayCompletionist);
+
+        return result;
+    } catch (e) {
+        utils.log(e, utils.logLevels.error);
+        return undefined;
+    }
+}
+
 // Function that fetchGames from api based on ID or name of the game and returns an
 // object with relevant metadata
 async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
@@ -98,6 +120,9 @@ async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
             data = foundGames[i];
         }
     }
+    
+    data.playtime = await getGamePlaytime(data.name);
+
     data = utils.assignToMissingResults(data);
 
     const gameNewDate = data.first_release_date
@@ -117,6 +142,7 @@ async function fetchGames(gameName, isID,  twitchClientID, igdbToken) {
         genres: data.genres,
         platforms: data.platforms,
         rating: data.rating,
+        playtime: data.playtime,
         developers: data.involved_companies,
         description: data.summary,
     };
